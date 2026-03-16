@@ -3,6 +3,8 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ServiceController;
 use App\Http\Controllers\Api\WorkerAuthController;
+use App\Http\Controllers\Api\MessageController;
+use App\Models\Message;
 use Illuminate\Support\Facades\Route;
 
 //Customer Routes
@@ -29,3 +31,11 @@ Route::prefix('worker-auth')->group(function () {
 //Service Routes
 Route::get('/services', [ServiceController::class, 'index']);
 Route::get('/services/{id}', [ServiceController::class, 'show']);
+
+//Message Routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/conversations', [MessageController::class, 'getConversationList']);
+    Route::get('/conversations/{workerId}', [MessageController::class, 'getConversation']);
+    Route::post('/messages', [MessageController::class, 'sendMessage']);
+    Route::put('/messages/{messageId}/read', [MessageController::class, 'markAsRead']);
+});

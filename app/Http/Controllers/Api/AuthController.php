@@ -21,7 +21,7 @@ class AuthController extends Controller
         ]);
 
         $user = User::create([
-            'first_name' => $request->name,
+            'first_name' => $request->first_name,
             'last_name' => $request->last_name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
@@ -45,7 +45,7 @@ class AuthController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
-        if (!$user || !Hash::check($request->password, $request->password)) {
+        if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json([
                 'message' => 'Inavalid credentials',
             ], 401);
