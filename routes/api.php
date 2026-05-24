@@ -12,10 +12,6 @@ use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\WorkerController;
 use App\Http\Controllers\Api\NotificationController;
 
-//─────────────────────────────────────────
-// PUBLIC ROUTES (no auth needed)
-//─────────────────────────────────────────
-
 // Customer auth
 Route::prefix('user-auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
@@ -32,9 +28,7 @@ Route::prefix('worker')->group(function () {
 Route::get('/services',      [ServiceController::class, 'index']);
 Route::get('/services/{id}', [ServiceController::class, 'show']);
 
-//─────────────────────────────────────────
-// PROTECTED ROUTES (auth required)
-//─────────────────────────────────────────
+
 Route::middleware('auth:sanctum')->group(function () {
 
     // Customer auth

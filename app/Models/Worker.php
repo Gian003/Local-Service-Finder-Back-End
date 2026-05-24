@@ -22,6 +22,19 @@ class Worker extends Model
         'review_count'
     ];
 
+    public function getProfilePhotoAttribute($value): ?string
+    {
+        if (!$value) return null;
+
+        //If already full URL, return as is
+        if (str_starts_with($value, 'http')) {
+            return $value;
+        }
+
+        //Convert storage path to URL
+        return asset('storage/' . $value);
+    }
+
     protected $hidden = ['password'];
 
     public function services()

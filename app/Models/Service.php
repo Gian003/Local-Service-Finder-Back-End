@@ -17,6 +17,17 @@ class Service extends Model
         'is_active'
     ];
 
+    public function getImageUrlAttribute($value): ?string
+    {
+        if (!$value) return null;
+
+        if (str_starts_with($value, 'http')) {
+            return $value;
+        }
+
+        return asset('storage/' . $value);
+    }
+
     public function worker()
     {
         return $this->belongsTo(Worker::class);

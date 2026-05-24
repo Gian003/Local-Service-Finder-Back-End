@@ -20,7 +20,7 @@ class ServiceSeeder extends Seeder
                 'description' => 'House Cleaning',
                 'price' => 1500,
                 'category' => 'cleaning',
-                'image_url' => 'https://picsum.photos/seed/cleaning/400',
+                'image_url' => 'services/CleaningService.jpg',
                 'discount_percent' => 30,
             ],
 
@@ -30,7 +30,7 @@ class ServiceSeeder extends Seeder
                 'description' => 'Plumbing',
                 'price' => 1500,
                 'category' => 'plumbing',
-                'image_url' => 'https://picsum.photos/seed/plumbing/400',
+                'image_url' => 'services/Plumbing.jpg',
                 'discount_percent' => 30,
             ],
 
@@ -40,7 +40,7 @@ class ServiceSeeder extends Seeder
                 'description' => 'Repair',
                 'price' => 1500,
                 'category' => 'repair',
-                'image_url' => 'https://picsum.photos/seed/repair/400',
+                'image_url' => 'services/ApplinceRepair.jpg',
                 'discount_percent' => 30,
             ],
 
@@ -50,7 +50,7 @@ class ServiceSeeder extends Seeder
                 'description' => 'Roof Cleaning',
                 'price' => 1500,
                 'category' => 'roofing',
-                'image_url' => 'https://picsum.photos/seed/roofing/400',
+                'image_url' => 'services/RoofGutterCleaning.jpg',
                 'discount_percent' => 30,
             ],
 
@@ -59,8 +59,8 @@ class ServiceSeeder extends Seeder
                 'title' => 'Furniture Assembly',
                 'description' => 'Furniture Assembly',
                 'price' => 1500,
-                'category' => 'furnitrure',
-                'image_url' => 'https://picsum.photos/seed/furniture/400',
+                'category' => 'electrician',
+                'image_url' => 'services/Electrician.jpg',
                 'discount_percent' => null,
             ],
         ];
