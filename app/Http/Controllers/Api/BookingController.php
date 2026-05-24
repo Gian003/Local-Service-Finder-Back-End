@@ -12,7 +12,7 @@ class BookingController extends Controller
     public function userBookings(Request $request)
     {
         $bookings = Booking::where('user_id', $request->user()->id)
-            ->with(['service', 'worker'])
+            ->with(['service', 'worker', 'address'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -23,7 +23,7 @@ class BookingController extends Controller
     public function workerBookings(Request $request)
     {
         $bookings = Booking::where('worker_id', $request->user()->id)
-            ->with(['service', 'user'])
+            ->with(['service', 'user', 'address'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -61,6 +61,7 @@ class BookingController extends Controller
         }
 
         $booking->update(['status' => 'accepted']);
+        $booking->load(['service', 'worker', 'user', 'address']);
 
         return response()->json([
             'message' => 'Booking accepted',
@@ -80,6 +81,7 @@ class BookingController extends Controller
         }
 
         $booking->update(['status' => 'cancelled']);
+        $booking->load(['service', 'worker', 'user', 'address']);
 
         return response()->json([
             'message' => 'Booking rejected',
@@ -99,6 +101,7 @@ class BookingController extends Controller
         }
 
         $booking->update(['status' => 'completed']);
+        $booking->load(['service', 'worker', 'user', 'address']);
 
         return response()->json([
             'message' => 'Booking completed',
@@ -118,6 +121,7 @@ class BookingController extends Controller
         }
 
         $booking->update(['status' => 'cancelled']);
+        $booking->load(['service', 'worker', 'user', 'address']);
 
         return response()->json([
             'message' => 'Booking cancelled',

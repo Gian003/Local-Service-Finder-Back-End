@@ -17,6 +17,8 @@ class Booking extends Model
         'payment_method',
         'payment_intent_id',
         'notes',
+        'latitude',
+        'longitude',
     ];
 
     public function user()
@@ -32,6 +34,11 @@ class Booking extends Model
     public function worker()
     {
         return $this->belongsTo(Worker::class);
+    }
+
+    public function address()
+    {
+        return $this->belongsTo(Address::class);
     }
 
     public function review()
