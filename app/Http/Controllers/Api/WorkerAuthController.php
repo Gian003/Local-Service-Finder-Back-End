@@ -43,7 +43,7 @@ class WorkerAuthController extends Controller
 
         $worker = Worker::where('email', $request->email)->first();
 
-        if (!$worker || !Hash::check($request->password, $worker->password)) {
+        if (!$worker || !Hash::check($request->password, $request->password)) {
             return response()->json([
                 'message' => 'Invalid credentials',
             ], 401);
