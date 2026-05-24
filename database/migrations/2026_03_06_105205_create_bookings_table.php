@@ -18,6 +18,7 @@ return new class extends Migration
             $table->foreignId('service_id')->constrained()->onDelete('cascade');
             $table->enum('status', [
                 'pending',
+                'accepted',
                 'upcoming',
                 'completed',
                 'cancelled',
