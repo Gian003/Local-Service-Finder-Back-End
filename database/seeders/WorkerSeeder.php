@@ -42,7 +42,7 @@ class WorkerSeeder extends Seeder
                 'last_name' => 'Cruz',
                 'email' => 'henrylsf@gmail.com',
                 'category' => 'repair',
-                'profile_photo' => 'workers/ApplinceRepair.jpg',
+                'profile_photo' => 'workers/ApplianceRepair.jpg',
                 'description' => 'Experienced repair specialist with a keen eye for detail.',
                 'rating' => 4.7,
                 'review_count' => 200

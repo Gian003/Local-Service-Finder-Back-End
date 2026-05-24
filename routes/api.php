@@ -38,7 +38,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // Worker auth
-    Route::prefix('worker')->group(function () {
+    Route::prefix('worker-auth')->group(function () {
         Route::post('/logout',            [WorkerAuthController::class, 'logout']);
         Route::get('/me',                 [WorkerController::class, 'me']);
         Route::put('/update',             [WorkerController::class, 'update']);

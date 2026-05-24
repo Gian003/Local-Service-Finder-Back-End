@@ -40,7 +40,7 @@ class ServiceSeeder extends Seeder
                 'description' => 'Repair',
                 'price' => 1500,
                 'category' => 'repair',
-                'image_url' => 'services/ApplinceRepair.jpg',
+                'image_url' => 'services/ApplianceRepair.jpg',
                 'discount_percent' => 30,
             ],
 
@@ -50,7 +50,7 @@ class ServiceSeeder extends Seeder
                 'description' => 'Roof Cleaning',
                 'price' => 1500,
                 'category' => 'roofing',
-                'image_url' => 'services/RoofGutterCleaning.jpg',
+                'image_url' => 'services/RoofingGutterCleaning.jpg',
                 'discount_percent' => 30,
             ],
 
