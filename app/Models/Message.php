@@ -28,4 +28,9 @@ class Message extends Model
     {
         return $this->belongsTo(Worker::class, 'receiver_id');
     }
+
+    public function getReceiverObject()
+    {
+        return $this->receiver()->first() ?? $this->sender()->first();
+    }
 }

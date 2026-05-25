@@ -19,19 +19,21 @@ class WorkerController extends Controller
         $worker = $request->user();
 
         $request->validate([
-            'name'         => 'sometimes|string|max:255',
-            'bio'          => 'sometimes|string',
+            'first_name'   => 'sometimes|string|max:200',
+            'last_name'    => 'sometimes|string|max:200',
+            'description'  => 'sometimes|string',
             'category'     => 'sometimes|string',
-            'skills'       => 'sometimes|string',
             'is_available' => 'sometimes|boolean',
+            'profile_photo' => 'sometimes|string',
         ]);
 
         $worker->update($request->only([
-            'name',
-            'bio',
+            'first_name',
+            'last_name',
+            'description',
             'category',
-            'skills',
             'is_available',
+            'profile_photo',
         ]));
 
         return response()->json([

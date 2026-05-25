@@ -19,17 +19,8 @@ class NotificationController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // Group by date
-        $grouped = $notifications->groupBy(function ($notif) {
-            $diff = now()->diffInDays($notif->created_at);
-            if ($diff == 0) return 'Today';
-            if ($diff == 1) return 'Yesterday';
-            return 'Earlier';
-        });
-
         return response()->json([
-            'notifications' => $notifications,
-            'grouped'       => $grouped,
+            'data' => $notifications,
             'unread_count'  => $notifications->where('is_read', false)->count(),
         ]);
     }
