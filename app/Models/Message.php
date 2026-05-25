@@ -26,6 +26,6 @@ class Message extends Model
 
     public function receiver()
     {
-        return $this->belongsTo(Worker::class, 'reveiver_id');
+        return $this->belongsTo(Worker::class, 'receiver_id');
     }
 }

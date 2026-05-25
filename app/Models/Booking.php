@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Booking extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'user_id',
         'service_id',
@@ -16,6 +19,7 @@ class Booking extends Model
         'total_price',
         'payment_method',
         'payment_intent_id',
+        'payment_status',
         'notes',
         'latitude',
         'longitude',
@@ -46,3 +50,4 @@ class Booking extends Model
         return $this->hasMany(Review::class);
     }
 }
+

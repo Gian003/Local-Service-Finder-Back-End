@@ -12,11 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('bookings', function (Blueprint $table) {
-            $table->dropForeignKey('bookings_address_id_foreign');
-            $table->foreign('address_id')
-                ->references('id')
-                ->on('addresses')
-                ->onDelete('restrict');
+            $table->string('payment_method')->default('cash')->change();
+            $table->enum('payment_status', ['pending', 'completed', 'failed', 'refunded'])->default('pending')->after('payment_intent_id');
+            $table->unique('payment_intent_id', 'bookings_payment_intent_id_unique');
         });
     }
 
@@ -26,7 +24,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('bookings', function (Blueprint $table) {
-            //
+            $table->dropUnique('bookings_payment_intent_id_unique');
+            $table->dropColumn('payment_status');
         });
     }
 };

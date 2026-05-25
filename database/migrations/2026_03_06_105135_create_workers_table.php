@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('last_name');
             $table->string('email')->unique();
             $table->string('password');
-            $table->string('profile_photo')->unique();
+            $table->string('profile_photo')->nullable();
             $table->string('category');
             $table->text('description')->nullable();
             $table->boolean('is_available')->default(true);

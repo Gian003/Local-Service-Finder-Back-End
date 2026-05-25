@@ -3,13 +3,15 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Laravel\Sanctum\HasApiTokens;
 
 class Worker extends Model
 {
-    use HasApiTokens;
+    use HasApiTokens, SoftDeletes;
 
     protected $fillable = [
+        'user_id',
         'first_name',
         'last_name',
         'email',
@@ -26,16 +28,20 @@ class Worker extends Model
     {
         if (!$value) return null;
 
-        //If already full URL, return as is
         if (str_starts_with($value, 'http')) {
             return $value;
         }
 
-        //Convert storage path to URL
         return asset('storage/' . $value);
     }
 
     protected $hidden = ['password'];
+
+    // Optional: Link to user account if worker is also a registered user
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
     public function services()
     {
@@ -52,3 +58,4 @@ class Worker extends Model
         return $this->hasMany(Review::class);
     }
 }
+

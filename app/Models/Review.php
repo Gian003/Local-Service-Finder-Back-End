@@ -10,9 +10,15 @@ class Review extends Model
         'booking_id',
         'user_id',
         'worker_id',
+        'rating',
         'review',
         'comment'
     ];
+
+    public function booking()
+    {
+        return $this->belongsTo(Booking::class);
+    }
 
     public function worker()
     {
@@ -24,3 +30,4 @@ class Review extends Model
         return $this->belongsTo(User::class);
     }
 }
+
