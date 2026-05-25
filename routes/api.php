@@ -19,7 +19,7 @@ Route::prefix('user-auth')->group(function () {
 });
 
 // Worker auth
-Route::prefix('worker')->group(function () {
+Route::prefix('worker-auth')->group(function () {
     Route::post('/register', [WorkerAuthController::class, 'register']);
     Route::post('/login',    [WorkerAuthController::class, 'login']);
 });
@@ -30,6 +30,11 @@ Route::get('/services/{id}', [ServiceController::class, 'show']);
 
 
 Route::middleware('auth:sanctum')->group(function () {
+
+    // Generic auth endpoint
+    Route::get('/auth/me', function(Request $request) {
+        return response()->json($request->user());
+    });
 
     // Customer auth
     Route::prefix('user-auth')->group(function () {
