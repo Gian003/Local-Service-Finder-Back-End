@@ -11,51 +11,75 @@ class WorkerAuthController extends Controller
 {
     public function register(Request $request)
     {
-        $request->validate([
-            'first_name' => 'required|string|max:200',
-            'last_name' => 'required|string|max:200',
-            'email' => 'required|email',
-            'password' => 'required|min:8|confirmed'
-        ]);
+        try {
+            $request->validate([
+                'first_name' => 'required|string|max:200',
+                'last_name' => 'required|string|max:200',
+                'email' => 'required|email',
+                'password' => 'required|min:8|confirmed'
+            ]);
 
-        $worker = Worker::create([
-            'first_name' => $request->first_name,
-            'last_name' => $request->last_name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
+            $worker = Worker::create([
+                'first_name' => $request->first_name,
+                'last_name' => $request->last_name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+            ]);
 
-        $token = $worker->createToken('auth_token')->plainTextToken;
+            $token = $worker->createToken('auth_token')->plainTextToken;
 
-        return response()->json([
-            'message' => 'registered successfully',
-            'token' => $token,
-            'worker' => $worker
-        ]);
+            return response()->json([
+                'message' => 'registered successfully',
+                'token' => $token,
+                'worker' => $worker
+            ], 201);
+        } catch (\Illuminate\Database\QueryException $e) {
+            return response()->json([
+                'message' => 'Database error occurred',
+                'error' => 'Failed to register worker'
+            ], 500);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function login(Request $request)
     {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|min:8'
-        ]);
+        try {
+            $request->validate([
+                'email' => 'required|email',
+                'password' => 'required|min:8'
+            ]);
 
-        $worker = Worker::where('email', $request->email)->first();
+            $worker = Worker::where('email', $request->email)->first();
 
-        if (!$worker || !Hash::check($request->password, $request->password)) {
+            if (!$worker || !Hash::check($request->password, $worker->password)) {
+                return response()->json([
+                    'message' => 'Invalid credentials',
+                ], 401);
+            }
+
+            $token = $worker->createToken('auth_token')->plainTextToken;
+
             return response()->json([
-                'message' => 'Invalid credentials',
-            ], 401);
+                'message' => 'logged in successfully',
+                'token' => $token,
+                'worker' => $worker
+            ], 200);
+        } catch (\Illuminate\Database\QueryException $e) {
+            return response()->json([
+                'message' => 'Database error occurred',
+                'error' => 'Failed to login'
+            ], 500);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        $token = $worker->createToken('auth_token')->plainTextToken;
-
-        return response()->json([
-            'message' => 'logged in successfully',
-            'token' => $token,
-            'worker' => $worker
-        ]);
     }
 
     public function logout(Request $request)
