@@ -17,7 +17,8 @@ class Service extends Model
         'category',
         'image_url',
         'discount_percent',
-        'is_active'
+        'is_active',
+        'review_count'
     ];
 
     public function getImageUrlAttribute($value): ?string
