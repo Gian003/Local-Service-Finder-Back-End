@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\WorkerController;
 use App\Http\Controllers\Api\NotificationController;
+use Illuminate\Http\Request;
 
 // Customer auth
 Route::prefix('user-auth')->group(function () {
@@ -32,7 +33,7 @@ Route::get('/services/{id}', [ServiceController::class, 'show']);
 Route::middleware('auth:sanctum')->group(function () {
 
     // Generic auth endpoint
-    Route::get('/auth/me', function(Request $request) {
+    Route::get('/auth/me', function (Request $request) {
         return response()->json($request->user());
     });
 
@@ -44,13 +45,15 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Worker auth
     Route::prefix('worker-auth')->group(function () {
-        Route::post('/logout',            [WorkerAuthController::class, 'logout']);
-        Route::get('/me',                 [WorkerController::class, 'me']);
+        Route::post('/register', [WorkerAuthController::class, 'register']);
+        Route::post('/login', [WorkerAuthController::class, 'login']);
+        Route::post('/logout', [WorkerAuthController::class, 'logout']);
+        Route::get('/me', [WorkerController::class, 'me']);
         Route::put('/update',             [WorkerController::class, 'update']);
-        Route::post('/toggle-availability',[WorkerController::class, 'toggleAvailability']);
+        Route::post('/toggle-availability', [WorkerController::class, 'toggleAvailability']);
         Route::get('/my-services',        [WorkerController::class, 'myServices']);
         Route::post('/my-services',       [WorkerController::class, 'addService']);
-        Route::delete('/my-services/{id}',[WorkerController::class, 'deleteService']);
+        Route::delete('/my-services/{id}', [WorkerController::class, 'deleteService']);
     });
 
     // Addresses
