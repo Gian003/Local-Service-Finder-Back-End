@@ -6,27 +6,28 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::table('bookings', function (Blueprint $table) {
-            $table->dropForeignKey('bookings_address_id_foreign');
-            $table->foreign('address_id')
-                ->references('id')
-                ->on('addresses')
-                ->onDelete('restrict');
+            // Add payment fields if they don't exist
+            if (!Schema::hasColumn('bookings', 'payment_method')) {
+                $table->string('payment_method')->default('cash');
+            }
+            if (!Schema::hasColumn('bookings', 'payment_intent_id')) {
+                $table->string('payment_intent_id')->nullable();
+            }
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::table('bookings', function (Blueprint $table) {
-            //
+            if (Schema::hasColumn('bookings', 'payment_intent_id')) {
+                $table->dropColumn('payment_intent_id');
+            }
+            if (Schema::hasColumn('bookings', 'payment_method')) {
+                $table->dropColumn('payment_method');
+            }
         });
     }
 };

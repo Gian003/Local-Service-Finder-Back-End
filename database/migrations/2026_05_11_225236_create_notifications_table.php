@@ -18,10 +18,12 @@ return new class extends Migration
                 ->onDelete('cascade');
             $table->string('title');
             $table->string('message');
-            $table->string('type');        // payment, reminder, booking, review
+            $table->string('type'); // payment, reminder, booking, review
             $table->boolean('is_read')->default(false);
-            $table->string('reference_id')->nullable();   // booking id, etc.
-            $table->string('reference_type')->nullable(); // App\Models\Booking
+            $table->foreignId('booking_id')
+                ->nullable()
+                ->constrained()
+                ->onDelete('cascade');
             $table->timestamps();
         });
     }
