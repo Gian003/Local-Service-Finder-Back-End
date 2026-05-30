@@ -80,7 +80,7 @@ class BookingController extends Controller
             ], 404);
         }
 
-        $booking->update(['status' => 'cancelled']);
+        $booking->update(['status' => 'rejected']);
         $booking->load(['service', 'worker', 'user', 'address']);
 
         return response()->json([

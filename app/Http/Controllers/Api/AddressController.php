@@ -127,7 +127,13 @@ class AddressController extends Controller
             ], 404);
         }
 
-        $address->delete();
+        try {
+            $address->delete();
+        } catch (\Illuminate\Database\QueryException $e) {
+            return response()->json([
+                'message' => 'Cannot delete this address because it is linked to an existing booking.',
+            ], 422);
+        }
 
         return response()->json([
             'message' => 'Address deleted successfully'
