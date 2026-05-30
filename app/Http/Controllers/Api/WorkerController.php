@@ -56,6 +56,19 @@ class WorkerController extends Controller
         ]);
     }
 
+    // Set availability explicitly (used by PUT /availability)
+    public function setAvailability(Request $request)
+    {
+        $request->validate(['is_available' => 'required|boolean']);
+        $worker = $request->user();
+        $worker->update(['is_available' => $request->boolean('is_available')]);
+
+        return response()->json([
+            'message'      => 'Availability updated',
+            'is_available' => $worker->is_available,
+        ]);
+    }
+
     // Get worker's own services
     public function myServices(Request $request)
     {

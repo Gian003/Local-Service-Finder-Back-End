@@ -21,9 +21,11 @@ class ServiceController extends Controller
                 case 'popular':
                     $query->orderBy('review_count', 'desc');
                     break;
+                case 'lowest_price':
                 case 'price-asc':
                     $query->orderBy('price', 'asc');
                     break;
+                case 'most_expensive':
                 case 'price-desc':
                     $query->orderBy('price', 'desc');
                     break;

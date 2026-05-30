@@ -97,4 +97,11 @@ class AuthController extends Controller
     {
         return response()->json($request->user());
     }
+
+    public function changePassword(Request $request)
+    {
+        $request->validate(['password' => 'required|min:8']);
+        $request->user()->update(['password' => Hash::make($request->password)]);
+        return response()->json(['message' => 'Password changed successfully']);
+    }
 }

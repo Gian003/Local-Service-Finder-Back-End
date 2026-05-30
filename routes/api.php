@@ -40,7 +40,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Customer auth
     Route::prefix('user-auth')->group(function () {
         Route::post('/logout',            [AuthController::class, 'logout']);
-        Route::get('/get-current-user',   [AuthController::class, 'me']);
+        Route::get('/get-current-user',   [AuthController::class, 'getCurrentUser']);
+        Route::put('/profile/password',   [AuthController::class, 'changePassword']);
     });
 
     // Worker auth
@@ -51,6 +52,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/me', [WorkerController::class, 'me']);
         Route::put('/update',             [WorkerController::class, 'update']);
         Route::post('/toggle-availability', [WorkerController::class, 'toggleAvailability']);
+        Route::put('/availability',          [WorkerController::class, 'setAvailability']);
         Route::get('/my-services',        [WorkerController::class, 'myServices']);
         Route::post('/my-services',       [WorkerController::class, 'addService']);
         Route::delete('/my-services/{id}', [WorkerController::class, 'deleteService']);

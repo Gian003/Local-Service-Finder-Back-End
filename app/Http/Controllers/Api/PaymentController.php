@@ -51,14 +51,20 @@ class PaymentController extends Controller
             'payment_intent_id' => 'nullable|string',
         ]);
 
-        $address = \App\Models\Address::find($request->address_id);
+        $address = \App\Models\Address::where('id', $request->address_id)
+            ->where('user_id', $request->user()->id)
+            ->first();
+
+        if (!$address) {
+            return response()->json([
+                'message' => 'Address not found or does not belong to you.',
+            ], 422);
+        }
 
         $lat = $lng = null;
-        if ($address) {
-            $geo = (new GeocodingService())->getCoordinates($address->address . ', ' . $address->city);
-            $lat = $geo['latitude'] ?? null;
-            $lng = $geo['longitude'] ?? null;
-        }
+        $geo = (new GeocodingService())->getCoordinates($address->address . ', ' . $address->city);
+        $lat = $geo['latitude'] ?? null;
+        $lng = $geo['longitude'] ?? null;
 
         $booking = Booking::create([
             'user_id'           => $request->user()->id,
