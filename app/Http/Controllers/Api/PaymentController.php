@@ -37,6 +37,10 @@ class PaymentController extends Controller
 
     public function confirmBooking(Request $request)
     {
+        if (!$request->user()) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
         $request->validate([
             'service_id'        => 'required|integer',
             'worker_id'         => 'required|integer',
@@ -47,45 +51,39 @@ class PaymentController extends Controller
             'payment_intent_id' => 'nullable|string',
         ]);
 
-        // Get address coordinates
-        $address = \App\Models\Address::find(
-            $request->input('address_id')
-        );
+        $address = \App\Models\Address::find($request->address_id);
 
-        $lat = null;
-        $lng = null;
-
+        $lat = $lng = null;
         if ($address) {
-            $geo = (new GeocodingService())->getCoordinates(
-                $address->address . ', ' . $address->city
-            );
-            $lat = $geo['latitude']  ?? null;
+            $geo = (new GeocodingService())->getCoordinates($address->address . ', ' . $address->city);
+            $lat = $geo['latitude'] ?? null;
             $lng = $geo['longitude'] ?? null;
         }
 
         $booking = Booking::create([
             'user_id'           => $request->user()->id,
-            'service_id'        => $request->input('service_id'),
-            'worker_id'         => $request->input('worker_id'),
-            'address_id'        => $request->input('address_id'),
-            'scheduled_at'      => $request->input('scheduled_at'),
-            'total_price'       => $request->input('total_price'),
-            'payment_method'    => $request->input('payment_method'),
-            'payment_intent_id' => $request->input('payment_intent_id'),
+            'service_id'        => $request->service_id,
+            'worker_id'         => $request->worker_id,
+            'address_id'        => $request->address_id,
+            'scheduled_at'      => $request->scheduled_at,
+            'total_price'       => $request->total_price,
+            'payment_method'    => $request->payment_method,
+            'payment_intent_id' => $request->payment_intent_id,
             'latitude'          => $lat,
             'longitude'         => $lng,
             'status'            => 'pending',
         ]);
 
-        // Auto-create notification after booking
+        $booking->load('service');
+
         NotificationHelper::paymentSuccessful(
-            userId:      $request->user()->id,
+            userId: $request->user()->id,
             serviceName: $booking->service->title ?? 'Service',
-            amount:      $booking->total_price,
+            amount: $booking->total_price,
         );
 
         NotificationHelper::bookingConfirmed(
-            userId:      $request->user()->id,
+            userId: $request->user()->id,
             serviceName: $booking->service->title ?? 'Service',
         );
 

@@ -3,12 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Laravel\Sanctum\HasApiTokens;
 
 class Worker extends Model
 {
-    use HasApiTokens, SoftDeletes;
+    use HasApiTokens;
 
     protected $fillable = [
         'user_id',
@@ -37,7 +36,6 @@ class Worker extends Model
 
     protected $hidden = ['password'];
 
-    // Optional: Link to user account if worker is also a registered user
     public function user()
     {
         return $this->belongsTo(User::class);

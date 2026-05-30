@@ -37,7 +37,7 @@ class BookingController extends Controller
             'service',
             'worker',
             'user',
-            'address', // 👈 includes address
+            'address',
         ])->find($id);
 
         if (!$booking) {
