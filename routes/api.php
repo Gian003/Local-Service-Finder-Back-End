@@ -46,8 +46,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Worker auth
     Route::prefix('worker-auth')->group(function () {
-        Route::post('/register', [WorkerAuthController::class, 'register']);
-        Route::post('/login', [WorkerAuthController::class, 'login']);
         Route::post('/logout', [WorkerAuthController::class, 'logout']);
         Route::get('/me', [WorkerController::class, 'me']);
         Route::put('/update',             [WorkerController::class, 'update']);
@@ -59,9 +57,11 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // Addresses
-    Route::get('/addresses',         [AddressController::class, 'index']);
-    Route::post('/addresses',        [AddressController::class, 'store']);
-    Route::delete('/addresses/{id}', [AddressController::class, 'destroy']);
+    Route::get('/addresses',               [AddressController::class, 'index']);
+    Route::post('/addresses',              [AddressController::class, 'store']);
+    Route::put('/addresses/{id}',          [AddressController::class, 'update']);
+    Route::put('/addresses/{id}/default',  [AddressController::class, 'setDefault']);
+    Route::delete('/addresses/{id}',       [AddressController::class, 'destroy']);
 
     // Bookings
     Route::get('/bookings/user',           [BookingController::class, 'userBookings']);

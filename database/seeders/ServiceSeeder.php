@@ -59,7 +59,7 @@ class ServiceSeeder extends Seeder
                 'title' => 'Furniture Assembly',
                 'description' => 'Furniture Assembly',
                 'price' => 1500,
-                'category' => 'electrician',
+                'category' => 'electrical',
                 'image_url' => 'services/Electrician.jpg',
                 'discount_percent' => null,
             ],
