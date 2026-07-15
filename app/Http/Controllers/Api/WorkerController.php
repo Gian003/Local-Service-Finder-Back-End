@@ -69,6 +69,31 @@ class WorkerController extends Controller
         ]);
     }
 
+    // Report current GPS position — called periodically by the worker app
+    // while en route to a job, so the customer's tracking screen can show a
+    // live marker + line instead of a static pin.
+    public function updateLocation(Request $request)
+    {
+        $request->validate([
+            'latitude'  => 'required|numeric|between:-90,90',
+            'longitude' => 'required|numeric|between:-180,180',
+        ]);
+
+        $worker = $request->user();
+
+        if (!($worker instanceof Worker)) {
+            return response()->json(['message' => 'Not available for customer accounts.'], 403);
+        }
+
+        $worker->update([
+            'latitude'            => $request->latitude,
+            'longitude'           => $request->longitude,
+            'location_updated_at' => now(),
+        ]);
+
+        return response()->json(['message' => 'Location updated']);
+    }
+
     // Get worker's own services
     public function myServices(Request $request)
     {

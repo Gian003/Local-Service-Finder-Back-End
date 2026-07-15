@@ -11,14 +11,18 @@ class WorkerAuthController extends Controller
 {
     public function register(Request $request)
     {
-        try {
-            $request->validate([
-                'first_name' => 'required|string|max:200',
-                'last_name' => 'required|string|max:200',
-                'email' => 'required|email',
-                'password' => 'required|min:8|confirmed'
-            ]);
+        // Validation errors (e.g. duplicate email) must propagate to
+        // Laravel's default handler for a proper 422 — catching
+        // ValidationException below as a generic \Exception would report a
+        // client input error as a 500.
+        $request->validate([
+            'first_name' => 'required|string|max:200',
+            'last_name' => 'required|string|max:200',
+            'email' => 'required|email|unique:workers,email',
+            'password' => 'required|min:8|confirmed'
+        ]);
 
+        try {
             $worker = Worker::create([
                 'first_name' => $request->first_name,
                 'last_name' => $request->last_name,
@@ -48,12 +52,12 @@ class WorkerAuthController extends Controller
 
     public function login(Request $request)
     {
-        try {
-            $request->validate([
-                'email' => 'required|email',
-                'password' => 'required|min:8'
-            ]);
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|min:8'
+        ]);
 
+        try {
             $worker = Worker::where('email', $request->email)->first();
 
             if (!$worker || !Hash::check($request->password, $worker->password)) {

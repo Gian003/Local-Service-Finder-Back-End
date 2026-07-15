@@ -15,13 +15,13 @@ use Illuminate\Http\Request;
 
 // Customer auth
 Route::prefix('user-auth')->group(function () {
-    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/register', [AuthController::class, 'register'])->middleware('idempotent');
     Route::post('/login',    [AuthController::class, 'login']);
 });
 
 // Worker auth
 Route::prefix('worker-auth')->group(function () {
-    Route::post('/register', [WorkerAuthController::class, 'register']);
+    Route::post('/register', [WorkerAuthController::class, 'register'])->middleware('idempotent');
     Route::post('/login',    [WorkerAuthController::class, 'login']);
 });
 
@@ -51,6 +51,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/update',             [WorkerController::class, 'update']);
         Route::post('/toggle-availability', [WorkerController::class, 'toggleAvailability'])->middleware('idempotent');
         Route::put('/availability',          [WorkerController::class, 'setAvailability']);
+        Route::put('/location',              [WorkerController::class, 'updateLocation']);
         Route::get('/my-services',        [WorkerController::class, 'myServices']);
         Route::post('/my-services',       [WorkerController::class, 'addService'])->middleware('idempotent');
         Route::delete('/my-services/{id}', [WorkerController::class, 'deleteService']);

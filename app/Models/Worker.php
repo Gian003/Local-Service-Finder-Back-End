@@ -20,7 +20,14 @@ class Worker extends Model
         'description',
         'is_available',
         'rating',
-        'review_count'
+        'review_count',
+        'latitude',
+        'longitude',
+        'location_updated_at',
+    ];
+
+    protected $casts = [
+        'location_updated_at' => 'datetime',
     ];
 
     public function getProfilePhotoAttribute($value): ?string
