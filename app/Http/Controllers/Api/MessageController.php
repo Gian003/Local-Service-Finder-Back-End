@@ -5,29 +5,45 @@ namespace App\Http\Controllers\Api;
 use App\Events\MessageSent;
 use App\Http\Controllers\Controller;
 use App\Models\Message;
+use App\Models\Worker;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class MessageController extends Controller
 {
+    // Chats are always between a User and a Worker, so the authenticated
+    // principal's type determines the other party's type too.
+    private function actorType(Request $request): string
+    {
+        return $request->user() instanceof Worker ? 'worker' : 'user';
+    }
+
     public function getConversation(Request $request, $workerId)
     {
         $userId = $request->user()->id;
+        $userType = $this->actorType($request);
+        $otherType = $userType === 'worker' ? 'user' : 'worker';
 
-        $messages = Message::where(function ($query) use ($userId, $workerId) {
+        $messages = Message::where(function ($query) use ($userId, $userType, $workerId, $otherType) {
             $query->where('sender_id', $userId)
-                ->where('receiver_id', $workerId);
+                ->where('sender_type', $userType)
+                ->where('receiver_id', $workerId)
+                ->where('receiver_type', $otherType);
         })
-            ->orWhere(function ($query) use ($userId, $workerId) {
+            ->orWhere(function ($query) use ($userId, $userType, $workerId, $otherType) {
                 $query->where('sender_id', $workerId)
-                    ->where('receiver_id', $userId);
+                    ->where('sender_type', $otherType)
+                    ->where('receiver_id', $userId)
+                    ->where('receiver_type', $userType);
             })
             ->with('sender')
             ->orderBy('created_at', 'asc')
             ->get();
 
         Message::where('sender_id', $workerId)
+            ->where('sender_type', $otherType)
             ->where('receiver_id', $userId)
+            ->where('receiver_type', $userType)
             ->where('is_read', false)
             ->update([
                 'is_read' => true,
@@ -44,9 +60,14 @@ class MessageController extends Controller
             'content' => 'required|string|max:1000'
         ]);
 
+        $senderType = $this->actorType($request);
+        $receiverType = $senderType === 'worker' ? 'user' : 'worker';
+
         $message = Message::create([
             'sender_id' => $request->user()->id,
+            'sender_type' => $senderType,
             'receiver_id' => $request->input('receiver_id'),
+            'receiver_type' => $receiverType,
             'content' => $request->input('content'),
         ]);
 
@@ -60,16 +81,22 @@ class MessageController extends Controller
     public function getConversationList(Request $request)
     {
         $userId = $request->user()->id;
+        $userType = $this->actorType($request);
 
-        $conversations = Message::where('sender_id', $userId)
-            ->orWhere('receiver_id', $userId)
+        $conversations = Message::where(function ($query) use ($userId, $userType) {
+            $query->where('sender_id', $userId)->where('sender_type', $userType);
+        })
+            ->orWhere(function ($query) use ($userId, $userType) {
+                $query->where('receiver_id', $userId)->where('receiver_type', $userType);
+            })
             ->with(['sender', 'receiver'])
             ->orderBy('created_at', 'desc')
             ->get()
-            ->groupBy(function ($message) use ($userId) {
-                return $message->sender_id === $userId
-                    ? 'worker_' . $message->receiver_id
-                    : 'user_' . $message->sender_id;
+            ->groupBy(function ($message) use ($userId, $userType) {
+                $isSender = $message->sender_id === $userId && $message->sender_type === $userType;
+                return $isSender
+                    ? $message->receiver_type . '_' . $message->receiver_id
+                    : $message->sender_type . '_' . $message->sender_id;
             })
             ->map(fn($messages) => $messages->first())
             ->values();
@@ -79,9 +106,13 @@ class MessageController extends Controller
 
     public function markAsRead(Request $request, $messageId)
     {
+        $userType = $this->actorType($request);
         $message = Message::find($messageId);
 
-        if ($message && $message->receiver_id === $request->user()->id) {
+        if ($message
+            && $message->receiver_id === $request->user()->id
+            && $message->receiver_type === $userType
+        ) {
             $message->update([
                 'is_read' => true,
                 'read_at' => Carbon::now()

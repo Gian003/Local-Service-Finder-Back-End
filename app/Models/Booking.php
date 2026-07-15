@@ -17,6 +17,7 @@ class Booking extends Model
         'payment_method',
         'payment_intent_id',
         'payment_status',
+        'idempotency_key',
         'notes',
         'latitude',
         'longitude',

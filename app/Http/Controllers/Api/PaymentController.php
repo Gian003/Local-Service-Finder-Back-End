@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Address;
 use App\Models\Booking;
+use App\Models\Service;
 use Illuminate\Http\Request;
 use Stripe\Stripe;
 use Stripe\PaymentIntent;
@@ -15,17 +17,27 @@ class PaymentController extends Controller
     public function createPaymentIntent(Request $request)
     {
         $request->validate([
-            'amount'     => 'required|integer', // in centavos
             'service_id' => 'required|integer',
         ]);
+
+        $service = Service::find($request->service_id);
+
+        if (!$service) {
+            return response()->json(['message' => 'Service not found'], 422);
+        }
+
+        // The charge amount is derived from the Service price, never trusted
+        // from the client — otherwise a tampered client could charge any
+        // amount it likes for a given booking.
+        $amountInCentavos = (int) round(((float) $service->price) * 100);
 
         Stripe::setApiKey(config('services.stripe.secret'));
 
         $paymentIntent = PaymentIntent::create([
-            'amount'   => $request->amount, // e.g. 150000 = ₱1,500
+            'amount'   => $amountInCentavos,
             'currency' => 'php',
             'metadata' => [
-                'service_id' => $request->service_id,
+                'service_id' => $service->id,
                 'user_id'    => $request->user()->id,
             ],
         ]);
@@ -46,12 +58,35 @@ class PaymentController extends Controller
             'worker_id'         => 'required|integer',
             'address_id'        => 'required|integer',
             'scheduled_at'      => 'required|string',
-            'total_price'       => 'required|numeric',
             'payment_method'    => 'required|string',
             'payment_intent_id' => 'nullable|string',
+            'idempotency_key'   => 'nullable|string',
         ]);
 
-        $address = \App\Models\Address::where('id', $request->address_id)
+        // The app auto-retries this request on a timeout, resending the same
+        // idempotency_key. If a previous attempt already created the booking
+        // (its response was just lost in transit), return that one instead
+        // of creating a duplicate.
+        $idempotencyKey = $request->input('idempotency_key');
+
+        if ($idempotencyKey) {
+            $existing = Booking::where('idempotency_key', $idempotencyKey)->first();
+            if ($existing) {
+                $existing->load('service');
+                return response()->json([
+                    'message' => 'Booking confirmed!',
+                    'booking' => $existing,
+                ], 201);
+            }
+        }
+
+        $service = Service::find($request->service_id);
+
+        if (!$service) {
+            return response()->json(['message' => 'Service not found'], 422);
+        }
+
+        $address = Address::where('id', $request->address_id)
             ->where('user_id', $request->user()->id)
             ->first();
 
@@ -61,36 +96,101 @@ class PaymentController extends Controller
             ], 422);
         }
 
+        // total_price is always the authoritative Service price — the
+        // client's number is never trusted for what gets stored or charged.
+        $totalPrice = (float) $service->price;
+        $paymentStatus = 'pending';
+
+        if ($request->payment_method === 'card') {
+            if (!$request->payment_intent_id) {
+                return response()->json([
+                    'message' => 'Missing payment confirmation for a card payment.',
+                ], 422);
+            }
+
+            Stripe::setApiKey(config('services.stripe.secret'));
+
+            try {
+                $intent = PaymentIntent::retrieve($request->payment_intent_id);
+            } catch (\Exception) {
+                return response()->json(['message' => 'Invalid payment reference.'], 422);
+            }
+
+            if ($intent->status !== 'succeeded') {
+                return response()->json(['message' => 'Payment has not been completed.'], 402);
+            }
+
+            $expectedAmount = (int) round($totalPrice * 100);
+
+            if ((int) $intent->amount !== $expectedAmount
+                || (int) ($intent->metadata->service_id ?? 0) !== $service->id
+                || (int) ($intent->metadata->user_id ?? 0) !== $request->user()->id
+            ) {
+                return response()->json(['message' => 'Payment does not match this booking.'], 422);
+            }
+
+            $paymentStatus = 'completed';
+        }
+
         $lat = $lng = null;
         $geo = (new GeocodingService())->getCoordinates($address->address . ', ' . $address->city);
         $lat = $geo['latitude'] ?? null;
         $lng = $geo['longitude'] ?? null;
 
-        $booking = Booking::create([
-            'user_id'           => $request->user()->id,
-            'service_id'        => $request->service_id,
-            'worker_id'         => $request->worker_id,
-            'address_id'        => $request->address_id,
-            'scheduled_at'      => $request->scheduled_at,
-            'total_price'       => $request->total_price,
-            'payment_method'    => $request->payment_method,
-            'payment_intent_id' => $request->payment_intent_id,
-            'latitude'          => $lat,
-            'longitude'         => $lng,
-            'status'            => 'pending',
-        ]);
+        try {
+            $booking = Booking::create([
+                'user_id'           => $request->user()->id,
+                'service_id'        => $service->id,
+                'worker_id'         => $request->worker_id,
+                'address_id'        => $request->address_id,
+                'scheduled_at'      => $request->scheduled_at,
+                'total_price'       => $totalPrice,
+                'payment_method'    => $request->payment_method,
+                'payment_intent_id' => $request->payment_intent_id,
+                'payment_status'    => $paymentStatus,
+                'idempotency_key'   => $idempotencyKey,
+                'latitude'          => $lat,
+                'longitude'         => $lng,
+                'status'            => 'pending',
+            ]);
+        } catch (\Illuminate\Database\QueryException $e) {
+            // A concurrent retry with the same idempotency_key (or
+            // payment_intent_id) won the race and created the booking first —
+            // return that one instead of surfacing the unique-constraint error.
+            $existing = $idempotencyKey
+                ? Booking::where('idempotency_key', $idempotencyKey)->first()
+                : null;
+
+            if (!$existing && $request->payment_intent_id) {
+                $existing = Booking::where('payment_intent_id', $request->payment_intent_id)->first();
+            }
+
+            if (!$existing) {
+                throw $e;
+            }
+
+            $existing->load('service');
+            return response()->json([
+                'message' => 'Booking confirmed!',
+                'booking' => $existing,
+            ], 201);
+        }
 
         $booking->load('service');
 
-        NotificationHelper::paymentSuccessful(
-            userId: $request->user()->id,
-            serviceName: $booking->service->title ?? 'Service',
-            amount: $booking->total_price,
-        );
+        if ($paymentStatus === 'completed') {
+            NotificationHelper::paymentSuccessful(
+                userId: $request->user()->id,
+                serviceName: $booking->service->title ?? 'Service',
+                amount: $booking->total_price,
+                bookingId: $booking->id,
+            );
+        }
 
         NotificationHelper::bookingConfirmed(
             userId: $request->user()->id,
             serviceName: $booking->service->title ?? 'Service',
+            bookingId: $booking->id,
         );
 
         return response()->json([

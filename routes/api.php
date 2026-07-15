@@ -49,16 +49,16 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/logout', [WorkerAuthController::class, 'logout']);
         Route::get('/me', [WorkerController::class, 'me']);
         Route::put('/update',             [WorkerController::class, 'update']);
-        Route::post('/toggle-availability', [WorkerController::class, 'toggleAvailability']);
+        Route::post('/toggle-availability', [WorkerController::class, 'toggleAvailability'])->middleware('idempotent');
         Route::put('/availability',          [WorkerController::class, 'setAvailability']);
         Route::get('/my-services',        [WorkerController::class, 'myServices']);
-        Route::post('/my-services',       [WorkerController::class, 'addService']);
+        Route::post('/my-services',       [WorkerController::class, 'addService'])->middleware('idempotent');
         Route::delete('/my-services/{id}', [WorkerController::class, 'deleteService']);
     });
 
     // Addresses
     Route::get('/addresses',               [AddressController::class, 'index']);
-    Route::post('/addresses',              [AddressController::class, 'store']);
+    Route::post('/addresses',              [AddressController::class, 'store'])->middleware('idempotent');
     Route::put('/addresses/{id}',          [AddressController::class, 'update']);
     Route::put('/addresses/{id}/default',  [AddressController::class, 'setDefault']);
     Route::delete('/addresses/{id}',       [AddressController::class, 'destroy']);
@@ -79,7 +79,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Messages
     Route::get('/conversations',              [MessageController::class, 'getConversationList']);
     Route::get('/conversations/{workerId}',   [MessageController::class, 'getConversation']);
-    Route::post('/messages',                  [MessageController::class, 'sendMessage']);
+    Route::post('/messages',                  [MessageController::class, 'sendMessage'])->middleware('idempotent');
     Route::put('/messages/{id}/read',         [MessageController::class, 'markAsRead']);
 
     // Notifications
@@ -88,6 +88,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/notifications/read-all',     [NotificationController::class, 'markAllAsRead']);
 
     // Payments
-    Route::post('/payment/intent',            [PaymentController::class, 'createPaymentIntent']);
+    Route::post('/payment/intent',            [PaymentController::class, 'createPaymentIntent'])->middleware('idempotent');
     Route::post('/booking/confirm',           [PaymentController::class, 'confirmBooking']);
 });

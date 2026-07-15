@@ -100,7 +100,17 @@ class AuthController extends Controller
 
     public function changePassword(Request $request)
     {
-        $request->validate(['password' => 'required|min:8']);
+        $request->validate([
+            'current_password' => 'required|string',
+            'password'          => 'required|min:8',
+        ]);
+
+        if (!Hash::check($request->current_password, $request->user()->password)) {
+            return response()->json([
+                'message' => 'Current password is incorrect.',
+            ], 422);
+        }
+
         $request->user()->update(['password' => Hash::make($request->password)]);
         return response()->json(['message' => 'Password changed successfully']);
     }

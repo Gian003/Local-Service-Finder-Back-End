@@ -2,6 +2,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Booking;
 use App\Models\Review;
 use App\Models\Worker;
 use Illuminate\Http\Request;
@@ -28,6 +29,32 @@ class ReviewController extends Controller
             'rating'     => 'required|numeric|min:1|max:5',
             'comment'    => 'nullable|string|max:500',
         ]);
+
+        $booking = Booking::find($request->booking_id);
+
+        // Must be a real booking, belonging to this exact caller (not a
+        // Worker whose id happens to collide with the real owner's — see
+        // isBookingOwner() in BookingController for why the type check matters).
+        if (!$booking
+            || $request->user() instanceof Worker
+            || $booking->user_id !== $request->user()->id
+        ) {
+            return response()->json([
+                'message' => 'Booking not found.'
+            ], 404);
+        }
+
+        if ((int) $booking->worker_id !== (int) $request->worker_id) {
+            return response()->json([
+                'message' => 'worker_id does not match this booking.'
+            ], 422);
+        }
+
+        if ($booking->status !== 'completed') {
+            return response()->json([
+                'message' => 'Only completed bookings can be reviewed.'
+            ], 422);
+        }
 
         // Check if already reviewed
         $existing = Review::where('booking_id', $request->booking_id)

@@ -28,13 +28,17 @@ class MessageSent implements ShouldBroadcast
 
     public function broadcastOn(): Channel
     {
-        $ids = [
-            $this->message->sender_id,
-            $this->message->receiver_id
+        // Qualify each participant with their type (user/worker), not just their
+        // raw id — users and workers are separate tables with independent id
+        // sequences, so two unrelated conversations could otherwise sort to the
+        // same "chat.{id}.{id}" channel name.
+        $participants = [
+            $this->message->sender_type . '-' . $this->message->sender_id,
+            $this->message->receiver_type . '-' . $this->message->receiver_id,
         ];
-        sort($ids);
+        sort($participants);
 
-        return new PrivateChannel('chat.' . implode('.', $ids));
+        return new PrivateChannel('chat.' . implode('.', $participants));
     }
 
     public function broadcastWith(): array
@@ -42,7 +46,9 @@ class MessageSent implements ShouldBroadcast
         return [
             'id' => $this->message->id,
             'sender_id' => $this->message->sender_id,
+            'sender_type' => $this->message->sender_type,
             'receiver_id' => $this->message->receiver_id,
+            'receiver_type' => $this->message->receiver_type,
             'content' => $this->message->content,
             'is_read' => $this->message->is_read,
             'read_at' => $this->message->read_at,
