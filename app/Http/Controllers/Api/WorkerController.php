@@ -109,11 +109,14 @@ class WorkerController extends Controller
     public function addService(Request $request)
     {
         $request->validate([
-            'title'            => 'required|string',
-            'description'      => 'nullable|string',
-            'price'            => 'required|numeric',
-            'category'         => 'required|string',
-            'discount_percent' => 'nullable|numeric',
+            'title'             => 'required|string',
+            'description'       => 'nullable|string',
+            'price'             => 'required|numeric',
+            'category'          => 'required|string',
+            'discount_percent'  => 'nullable|numeric',
+            'cover_image'       => 'nullable|file|image|max:8192',
+            'gallery_images.*'  => 'nullable|file|image|max:8192',
+            'video'             => 'nullable|file|mimetypes:video/mp4,video/quicktime,video/x-msvideo,video/3gpp|max:51200',
         ]);
 
         $service = $request->user()->services()->create([
@@ -122,10 +125,83 @@ class WorkerController extends Controller
             'price'            => $request->input('price'),
             'category'         => $request->input('category'),
             'discount_percent' => $request->input('discount_percent'),
+            'image_url'        => $this->storeCoverImage($request),
+            'gallery_images'   => $this->storeGalleryImages($request),
+            'video_url'        => $this->storeVideo($request),
             'is_active'        => true,
         ]);
 
         return response()->json($service, 201);
+    }
+
+    // Update a service. Deliberately a POST (not PUT) route — PHP doesn't
+    // populate $_FILES for PUT requests without Laravel's method-spoofing
+    // workaround, which is its own source of multipart headaches, so this
+    // sidesteps it entirely. Images/video are only replaced if new ones are
+    // uploaded; omitting them keeps whatever the service already has.
+    public function updateService(Request $request, $id)
+    {
+        $service = $request->user()->services()->find($id);
+
+        if (!$service) {
+            return response()->json(['message' => 'Service not found'], 404);
+        }
+
+        $request->validate([
+            'title'             => 'required|string',
+            'description'       => 'nullable|string',
+            'price'             => 'required|numeric',
+            'category'          => 'required|string',
+            'discount_percent'  => 'nullable|numeric',
+            'cover_image'       => 'nullable|file|image|max:8192',
+            'gallery_images.*'  => 'nullable|file|image|max:8192',
+            'video'             => 'nullable|file|mimetypes:video/mp4,video/quicktime,video/x-msvideo,video/3gpp|max:51200',
+        ]);
+
+        $updates = [
+            'title'            => $request->input('title'),
+            'description'      => $request->input('description'),
+            'price'            => $request->input('price'),
+            'category'         => $request->input('category'),
+            'discount_percent' => $request->input('discount_percent'),
+        ];
+
+        $coverImage = $this->storeCoverImage($request);
+        if ($coverImage) $updates['image_url'] = $coverImage;
+
+        $galleryImages = $this->storeGalleryImages($request);
+        if ($galleryImages) $updates['gallery_images'] = $galleryImages;
+
+        $video = $this->storeVideo($request);
+        if ($video) $updates['video_url'] = $video;
+
+        $service->update($updates);
+
+        return response()->json($service);
+    }
+
+    private function storeCoverImage(Request $request): ?string
+    {
+        return $request->hasFile('cover_image')
+            ? $request->file('cover_image')->store('services', 'public')
+            : null;
+    }
+
+    private function storeGalleryImages(Request $request): ?array
+    {
+        if (!$request->hasFile('gallery_images')) return null;
+
+        return array_map(
+            fn ($file) => $file->store('services/gallery', 'public'),
+            $request->file('gallery_images')
+        );
+    }
+
+    private function storeVideo(Request $request): ?string
+    {
+        return $request->hasFile('video')
+            ? $request->file('video')->store('services/videos', 'public')
+            : null;
     }
 
     // Delete a service

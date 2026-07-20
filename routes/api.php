@@ -54,6 +54,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/location',              [WorkerController::class, 'updateLocation']);
         Route::get('/my-services',        [WorkerController::class, 'myServices']);
         Route::post('/my-services',       [WorkerController::class, 'addService'])->middleware('idempotent');
+        Route::post('/my-services/{id}',  [WorkerController::class, 'updateService'])->middleware('idempotent');
         Route::delete('/my-services/{id}', [WorkerController::class, 'deleteService']);
     });
 

@@ -28,6 +28,7 @@ class Worker extends Model
 
     protected $casts = [
         'location_updated_at' => 'datetime',
+        'is_available' => 'boolean',
     ];
 
     public function getProfilePhotoAttribute($value): ?string

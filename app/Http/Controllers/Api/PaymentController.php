@@ -18,6 +18,7 @@ class PaymentController extends Controller
     {
         $request->validate([
             'service_id' => 'required|integer',
+            'demo_card'  => 'nullable|boolean',
         ]);
 
         $service = Service::find($request->service_id);
@@ -33,17 +34,36 @@ class PaymentController extends Controller
 
         Stripe::setApiKey(config('services.stripe.secret'));
 
-        $paymentIntent = PaymentIntent::create([
+        $params = [
             'amount'   => $amountInCentavos,
             'currency' => 'php',
             'metadata' => [
                 'service_id' => $service->id,
                 'user_id'    => $request->user()->id,
             ],
-        ]);
+        ];
+
+        // Demo path for presentations: confirm immediately with Stripe's
+        // built-in test payment method token. This only ever works against
+        // a test-mode secret key — Stripe rejects it outright on a live key
+        // — so it can't be used to skip a real charge in production. It
+        // still produces a genuine 'succeeded' PaymentIntent that
+        // confirmBooking() verifies exactly like a real card payment, so
+        // the credit-card flow is demoed end-to-end without Stripe's UI.
+        if ($request->boolean('demo_card')) {
+            $params['payment_method_types'] = ['card'];
+            $params['payment_method'] = 'pm_card_visa';
+            $params['confirm'] = true;
+        } else {
+            $params['automatic_payment_methods'] = ['enabled' => true];
+        }
+
+        $paymentIntent = PaymentIntent::create($params);
 
         return response()->json([
-            'client_secret' => $paymentIntent->client_secret,
+            'client_secret'     => $paymentIntent->client_secret,
+            'payment_intent_id' => $paymentIntent->id,
+            'status'            => $paymentIntent->status,
         ]);
     }
 
